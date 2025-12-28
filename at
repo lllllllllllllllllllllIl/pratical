@@ -5,7 +5,7 @@ workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttributeCh
 if workspace.Characters[game:GetService('Players').LocalPlayer.Name].HumanoidRootPart.VerticalMeter.Enabled == true then
 
 
-if workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttribute('meterOffset').Y  <= -1.3 then
+if workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttribute('meterOffset').Y  <= -1.25 then
 
 
 game:GetService('ReplicatedStorage').Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})

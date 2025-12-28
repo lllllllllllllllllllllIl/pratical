@@ -1,0 +1,69 @@
+workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttributeChangedSignal('meterOffset'):Connect(function()
+
+
+
+if workspace.Characters[game:GetService('Players').LocalPlayer.Name].HumanoidRootPart.VerticalMeter.Enabled == true then
+
+
+if workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttribute('meterOffset').Y  <= -1.2 then
+
+
+game:GetService('ReplicatedStorage').Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})
+
+
+end
+elseif  workspace.Characters[game:GetService('Players').LocalPlayer.Name].HumanoidRootPart.BatMeter.Enabled == true then
+
+
+
+
+
+
+if workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttribute('meterOffset').Y  <= -0.9067 then
+game:GetService('ReplicatedStorage').Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})
+
+end
+
+
+elseif workspace.Characters[game:GetService('Players').LocalPlayer.Name].HumanoidRootPart.RocketMeter.Enabled == true then
+
+if workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttribute('meterOffset').Y  <= -0.87 then
+game:GetService('ReplicatedStorage').Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})
+
+end
+
+
+elseif workspace.Characters[game:GetService('Players').LocalPlayer.Name].Head.HoopMeter.Enabled == true then
+
+if workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttribute('meterOffset').Y  >= 0.91 then
+
+game:GetService('ReplicatedStorage').Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})
+
+
+end
+
+
+elseif workspace.Characters[game:GetService('Players').LocalPlayer.Name].Head.RobloxMeter.Enabled == true then
+
+if workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttribute('meterOffset').X  >= 0.822 then
+game:GetService('ReplicatedStorage').Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})
+
+
+end
+
+else
+
+if workspace.Characters[game:GetService('Players').LocalPlayer.Name]:GetAttribute('meterOffset').Y  <= -0.9 then
+game:GetService('ReplicatedStorage').Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})
+
+end
+
+
+
+
+
+
+
+
+end
+end)

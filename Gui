@@ -1,0 +1,140 @@
+-- Load Rayfield
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+if not Rayfield then
+    warn("Failed to load Rayfield")
+    return
+end
+
+-- Window (KEY SYSTEM INCLUDED)
+local Window = Rayfield:CreateWindow({
+    Name = "Vision Hub",
+    LoadingTitle = "Vision Script",
+    LoadingSubtitle = "by Vision",
+    ConfigurationSaving = {
+       Enabled = false,
+       FileName = "Vision Script Hub"
+    },
+    Discord = {
+       Enabled = true,
+       Invite = "GYH92be25Z",
+       RememberJoins = true
+    },
+    KeySystem = true,
+    KeySettings = {
+       Title = "Vision Script Hub | Key",
+       Subtitle = "Link In Discord Server",
+       Note = "Join Server From Misc Tab",
+       FileName = "BladeBallKey",
+       SaveKey = false,
+       GrabKeyFromSite = true,
+       Key = {"https://pastebin.com/raw/QZYyHa0H"}
+    }
+})
+
+-- Tab
+local MainTab = Window:CreateTab("Main", nil)
+MainTab:CreateSection("Useful")
+
+---------------------------------------------------------------------
+-- AUTO METER RELEASE (TOGGLE CONTROLLED)
+---------------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer
+local ShootRemote = ReplicatedStorage.Aero.AeroRemoteServices.InputService.Shoot
+
+local AutoMeterEnabled = false
+local meterConnection = nil
+
+local function getCharacter()
+    return workspace:WaitForChild("Characters"):WaitForChild(LocalPlayer.Name)
+end
+
+local function connectMeter()
+    if meterConnection then
+        meterConnection:Disconnect()
+        meterConnection = nil
+    end
+
+    local Character = getCharacter()
+
+    meterConnection =
+        Character:GetAttributeChangedSignal("meterOffset"):Connect(function()
+            if not AutoMeterEnabled then return end
+
+            local offset = Character:GetAttribute("meterOffset")
+            if not offset then return end
+
+            local HRP = Character:FindFirstChild("HumanoidRootPart")
+            local Head = Character:FindFirstChild("Head")
+            if not HRP or not Head then return end
+
+            if HRP:FindFirstChild("VerticalMeter") and HRP.VerticalMeter.Enabled then
+                if offset.Y <= -1.27 then
+                    ShootRemote:FireServer({ Shoot = false })
+                end
+
+            elseif HRP:FindFirstChild("BatMeter") and HRP.BatMeter.Enabled then
+                if offset.Y <= -0.9067 then
+                    ShootRemote:FireServer({ Shoot = false })
+                end
+
+            elseif HRP:FindFirstChild("RocketMeter") and HRP.RocketMeter.Enabled then
+                if offset.Y <= -0.87 then
+                    ShootRemote:FireServer({ Shoot = false })
+                end
+
+            elseif Head:FindFirstChild("HoopMeter") and Head.HoopMeter.Enabled then
+                if offset.Y >= 0.91 then
+                    ShootRemote:FireServer({ Shoot = false })
+                end
+
+            elseif Head:FindFirstChild("RobloxMeter") and Head.RobloxMeter.Enabled then
+                if offset.X >= 0.822 then
+                    ShootRemote:FireServer({ Shoot = false })
+                end
+
+            else
+                if offset.Y <= -0.9 then
+                    ShootRemote:FireServer({ Shoot = false })
+                end
+            end
+        end)
+end
+
+-- Reconnect on respawn
+LocalPlayer.CharacterAdded:Connect(function()
+    if AutoMeterEnabled then
+        task.wait(1)
+        connectMeter()
+    end
+end)
+
+-- Toggle
+MainTab:CreateToggle({
+    Name = "Auto Perfect",
+    CurrentValue = false,
+    Flag = "AutoMeterRelease_Toggle",
+    Callback = function(Value)
+        AutoMeterEnabled = Value
+
+        if Value then
+            connectMeter()
+        else
+            if meterConnection then
+                meterConnection:Disconnect()
+                meterConnection = nil
+            end
+        end
+    end,
+})
+
+-- Notify
+Rayfield:Notify({
+    Title = "Vision Hub",
+    Content = "Vision Hub Loaded",
+    Duration = 4,
+})

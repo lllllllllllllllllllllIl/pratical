@@ -42,15 +42,35 @@ MainTab:CreateSection("Useful")
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local LocalPlayer = Players.LocalPlayer
-local ShootRemote = ReplicatedStorage.Aero.AeroRemoteServices.InputService.Shoot
 
 local AutoMeterEnabled = false
 local meterConnection = nil
+local customMeterOffset = -1.27 -- default value
 
 local function getCharacter()
     return workspace:WaitForChild("Characters"):WaitForChild(LocalPlayer.Name)
+end
+
+local function fireShoot()
+    local Character = getCharacter()
+    -- Check if new park remote exists
+    local parkRemote = ReplicatedStorage:FindFirstChild("RemoteEvent")
+    if parkRemote then
+        -- Fire the new park remote
+        local args = {
+            [1] = {
+                [1] = {
+                    [1] = "5",
+                    [2] = { ["Shoot"] = false }
+                }
+            }
+        }
+        parkRemote:FireServer(unpack(args))
+    else
+        -- Fire the old remote
+        ReplicatedStorage.Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})
+    end
 end
 
 local function connectMeter()
@@ -61,48 +81,48 @@ local function connectMeter()
 
     local Character = getCharacter()
 
-    meterConnection =
-        Character:GetAttributeChangedSignal("meterOffset"):Connect(function()
-            if not AutoMeterEnabled then return end
+    meterConnection = Character:GetAttributeChangedSignal("meterOffset"):Connect(function()
+        if not AutoMeterEnabled then return end
 
-            local offset = Character:GetAttribute("meterOffset")
-            if not offset then return end
+        local meterOffset = Character:GetAttribute("meterOffset")
 
-            local HRP = Character:FindFirstChild("HumanoidRootPart")
-            local Head = Character:FindFirstChild("Head")
-            if not HRP or not Head then return end
-
-            if HRP:FindFirstChild("VerticalMeter") and HRP.VerticalMeter.Enabled then
-                if offset.Y <= -1.3 then
-                    ShootRemote:FireServer({ Shoot = false })
-                end
-
-            elseif HRP:FindFirstChild("BatMeter") and HRP.BatMeter.Enabled then
-                if offset.Y <= -0.9067 then
-                    ShootRemote:FireServer({ Shoot = false })
-                end
-
-            elseif HRP:FindFirstChild("RocketMeter") and HRP.RocketMeter.Enabled then
-                if offset.Y <= -0.87 then
-                    ShootRemote:FireServer({ Shoot = false })
-                end
-
-            elseif Head:FindFirstChild("HoopMeter") and Head.HoopMeter.Enabled then
-                if offset.Y >= 0.91 then
-                    ShootRemote:FireServer({ Shoot = false })
-                end
-
-            elseif Head:FindFirstChild("RobloxMeter") and Head.RobloxMeter.Enabled then
-                if offset.X >= 0.822 then
-                    ShootRemote:FireServer({ Shoot = false })
-                end
-
-            else
-                if offset.Y <= -0.9 then
-                    ShootRemote:FireServer({ Shoot = false })
-                end
+        -- VerticalMeter
+        if Character.HumanoidRootPart:FindFirstChild("VerticalMeter") and Character.HumanoidRootPart.VerticalMeter.Enabled then
+            if meterOffset.Y <= customMeterOffset then
+                fireShoot()
             end
-        end)
+
+        -- BatMeter
+        elseif Character.HumanoidRootPart:FindFirstChild("BatMeter") and Character.HumanoidRootPart.BatMeter.Enabled then
+            if meterOffset.Y <= customMeterOffset then
+                fireShoot()
+            end
+
+        -- RocketMeter
+        elseif Character.HumanoidRootPart:FindFirstChild("RocketMeter") and Character.HumanoidRootPart.RocketMeter.Enabled then
+            if meterOffset.Y <= customMeterOffset then
+                fireShoot()
+            end
+
+        -- HoopMeter (Park mode)
+        elseif Character.Head:FindFirstChild("HoopMeter") and Character.Head.HoopMeter.Enabled then
+            if meterOffset.Y >= -customMeterOffset then -- invert if needed for Park
+                fireShoot()
+            end
+
+        -- RobloxMeter
+        elseif Character.Head:FindFirstChild("RobloxMeter") and Character.Head.RobloxMeter.Enabled then
+            if meterOffset.X >= -customMeterOffset then -- invert if needed for Roblox
+                fireShoot()
+            end
+
+        -- Default fallback
+        else
+            if meterOffset.Y <= customMeterOffset then
+                fireShoot()
+            end
+        end
+    end)
 end
 
 -- Reconnect on respawn
@@ -120,7 +140,6 @@ MainTab:CreateToggle({
     Flag = "AutoMeterRelease_Toggle",
     Callback = function(Value)
         AutoMeterEnabled = Value
-
         if Value then
             connectMeter()
         else
@@ -129,6 +148,19 @@ MainTab:CreateToggle({
                 meterConnection = nil
             end
         end
+    end,
+})
+
+-- Slider for adjusting all meter offsets
+MainTab:CreateSlider({
+    Name = "Meter Offset",
+    Range = {-1.40, -0.80},
+    Increment = 0.01,
+    Suffix = "",
+    CurrentValue = customMeterOffset,
+    Flag = "MeterOffsetSlider",
+    Callback = function(Value)
+        customMeterOffset = Value
     end,
 })
 

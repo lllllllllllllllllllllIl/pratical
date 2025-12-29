@@ -73,7 +73,7 @@ local function connectMeter()
             if not HRP or not Head then return end
 
             if HRP:FindFirstChild("VerticalMeter") and HRP.VerticalMeter.Enabled then
-                if offset.Y <= -1.27 then
+                if offset.Y <= -1.3 then
                     ShootRemote:FireServer({ Shoot = false })
                 end
 

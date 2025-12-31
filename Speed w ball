@@ -1,0 +1,17 @@
+local func = {}
+function func.getCharacter()
+    local char = workspace.Characters:WaitForChild(game.Players.LocalPlayer.Name)
+    char:WaitForChild("HumanoidRootPart")
+    return char
+end
+
+game:GetService('RunService').Heartbeat:Connect(function()
+    if func.getCharacter().HumanoidRootPart:FindFirstChild('Basketball') 
+       and func.getCharacter().HumanoidRootPart.Basketball:IsA('Motor6D') 
+       and func.getCharacter().HumanoidRootPart.Basketball.Part1 
+       and func.getCharacter().HumanoidRootPart.Basketball.Part1.Name == 'Basketball' then
+        func.getCharacter():SetAttribute('WalkSpeed', 67)
+    else
+        func.getCharacter():SetAttribute('WalkSpeed', 13.818737296367772)
+    end
+end)

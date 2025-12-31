@@ -154,7 +154,7 @@ MainTab:CreateToggle({
 -- Slider for adjusting all meter offsets
 MainTab:CreateSlider({
     Name = "Meter Offset",
-    Range = {-1.40, -0.80},
+    Range = {-1.40, -0.70},
     Increment = 0.01,
     Suffix = "",
     CurrentValue = customMeterOffset,

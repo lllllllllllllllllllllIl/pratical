@@ -37,46 +37,41 @@ local MainTab = Window:CreateTab("Main", nil)
 MainTab:CreateSection("Useful")
 
 ---------------------------------------------------------------------
--- AUTO METER RELEASE (TOGGLE CONTROLLED)
+-- AUTO METER RELEASE
 ---------------------------------------------------------------------
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 local AutoMeterEnabled = false
-local meterConnection = nil
-local customMeterOffset = -1.27 -- default value
+local meterConnection
+local customMeterOffset = -1.27
 
 local function getCharacter()
     return workspace:WaitForChild("Characters"):WaitForChild(LocalPlayer.Name)
 end
 
 local function fireShoot()
-    local Character = getCharacter()
-    -- Check if new park remote exists
     local parkRemote = ReplicatedStorage:FindFirstChild("RemoteEvent")
     if parkRemote then
-        -- Fire the new park remote
-        local args = {
-            [1] = {
-                [1] = {
-                    [1] = "5",
-                    [2] = { ["Shoot"] = false }
+        parkRemote:FireServer({
+            {
+                {
+                    "5",
+                    { Shoot = false }
                 }
             }
-        }
-        parkRemote:FireServer(unpack(args))
+        })
     else
-        -- Fire the old remote
-        ReplicatedStorage.Aero.AeroRemoteServices.InputService.Shoot:FireServer({Shoot = false})
+        ReplicatedStorage.Aero.AeroRemoteServices.InputService.Shoot:FireServer({ Shoot = false })
     end
 end
 
 local function connectMeter()
     if meterConnection then
         meterConnection:Disconnect()
-        meterConnection = nil
     end
 
     local Character = getCharacter()
@@ -85,47 +80,27 @@ local function connectMeter()
         if not AutoMeterEnabled then return end
 
         local meterOffset = Character:GetAttribute("meterOffset")
+        local hrp = Character:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
 
-        -- VerticalMeter
-        if Character.HumanoidRootPart:FindFirstChild("VerticalMeter") and Character.HumanoidRootPart.VerticalMeter.Enabled then
-            if meterOffset.Y <= customMeterOffset then
-                fireShoot()
-            end
+        if hrp:FindFirstChild("VerticalMeter") and hrp.VerticalMeter.Enabled then
+            if meterOffset.Y <= customMeterOffset then fireShoot() end
 
-        -- BatMeter
-        elseif Character.HumanoidRootPart:FindFirstChild("BatMeter") and Character.HumanoidRootPart.BatMeter.Enabled then
-            if meterOffset.Y <= customMeterOffset then
-                fireShoot()
-            end
+        elseif hrp:FindFirstChild("BatMeter") and hrp.BatMeter.Enabled then
+            if meterOffset.Y <= customMeterOffset then fireShoot() end
 
-        -- RocketMeter
-        elseif Character.HumanoidRootPart:FindFirstChild("RocketMeter") and Character.HumanoidRootPart.RocketMeter.Enabled then
-            if meterOffset.Y <= customMeterOffset then
-                fireShoot()
-            end
+        elseif hrp:FindFirstChild("RocketMeter") and hrp.RocketMeter.Enabled then
+            if meterOffset.Y <= customMeterOffset then fireShoot() end
 
-        -- HoopMeter (Park mode)
         elseif Character.Head:FindFirstChild("HoopMeter") and Character.Head.HoopMeter.Enabled then
-            if meterOffset.Y >= -customMeterOffset then -- invert if needed for Park
-                fireShoot()
-            end
+            if meterOffset.Y >= -customMeterOffset then fireShoot() end
 
-        -- RobloxMeter
         elseif Character.Head:FindFirstChild("RobloxMeter") and Character.Head.RobloxMeter.Enabled then
-            if meterOffset.X >= -customMeterOffset then -- invert if needed for Roblox
-                fireShoot()
-            end
-
-        -- Default fallback
-        else
-            if meterOffset.Y <= customMeterOffset then
-                fireShoot()
-            end
+            if meterOffset.X >= -customMeterOffset then fireShoot() end
         end
     end)
 end
 
--- Reconnect on respawn
 LocalPlayer.CharacterAdded:Connect(function()
     if AutoMeterEnabled then
         task.wait(1)
@@ -133,38 +108,95 @@ LocalPlayer.CharacterAdded:Connect(function()
     end
 end)
 
--- Toggle
 MainTab:CreateToggle({
     Name = "Auto Perfect",
     CurrentValue = false,
-    Flag = "AutoMeterRelease_Toggle",
     Callback = function(Value)
         AutoMeterEnabled = Value
         if Value then
             connectMeter()
-        else
-            if meterConnection then
-                meterConnection:Disconnect()
-                meterConnection = nil
-            end
+        elseif meterConnection then
+            meterConnection:Disconnect()
         end
     end,
 })
 
--- Slider for adjusting all meter offsets
 MainTab:CreateSlider({
     Name = "Meter Offset",
     Range = {-1.40, -0.70},
     Increment = 0.01,
-    Suffix = "",
     CurrentValue = customMeterOffset,
-    Flag = "MeterOffsetSlider",
     Callback = function(Value)
         customMeterOffset = Value
     end,
 })
 
--- Notify
+---------------------------------------------------------------------
+-- BASKETBALL SPEED BOOST (ADDED TO VISION HUB)
+---------------------------------------------------------------------
+
+MainTab:CreateSection("Movement")
+
+local SpeedBoostEnabled = false
+local SpeedBoostValue = 0
+local BASE_SPEED = 13.818737296367772
+
+local function getSpeedCharacter()
+    local chars = workspace:FindFirstChild("Characters")
+    if not chars then return end
+
+    local char = chars:FindFirstChild(LocalPlayer.Name)
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    return char, hrp
+end
+
+MainTab:CreateToggle({
+    Name = "Speed With Ball",
+    CurrentValue = false,
+    Callback = function(Value)
+        SpeedBoostEnabled = Value
+        if not Value then
+            local char = getSpeedCharacter()
+            if char then
+                char:SetAttribute("WalkSpeed", BASE_SPEED)
+            end
+        end
+    end,
+})
+
+MainTab:CreateSlider({
+    Name = "Speed Boost Amount",
+    Range = {0, 50},
+    Increment = 1,
+    CurrentValue = 0,
+    Callback = function(Value)
+        SpeedBoostValue = Value
+    end,
+})
+
+RunService.Heartbeat:Connect(function()
+    if not SpeedBoostEnabled then return end
+
+    local char, hrp = getSpeedCharacter()
+    if not char or not hrp then return end
+
+    local ball = hrp:FindFirstChild("Basketball")
+
+    if ball and ball:IsA("Motor6D") and ball.Part1 and ball.Part1.Name == "Basketball" then
+        char:SetAttribute("WalkSpeed", BASE_SPEED + SpeedBoostValue)
+    else
+        char:SetAttribute("WalkSpeed", BASE_SPEED)
+    end
+end)
+
+---------------------------------------------------------------------
+-- NOTIFY
+---------------------------------------------------------------------
+
 Rayfield:Notify({
     Title = "Vision Hub",
     Content = "Vision Hub Loaded",
